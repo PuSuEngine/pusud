@@ -1,6 +1,9 @@
 # PuSu Engine daemon
 
-PuSu Engine is a Pub-Sub server.
+PuSu Engine is a Pub-Sub system.
+
+This project provides `pusud`, the relay server in the PuSu Engine system. The
+clients for other languages are hosted in other repositories.
 
 
 ## Running
@@ -9,13 +12,31 @@ Go to [Golang.org](https://golang.org) and download Go for your platform.
 
 After running the installer, make sure you set up your `PATH` and `GOPATH` appropriately. Basically `go` needs to be found in `PATH`, and `GOPATH` just needs to be set to e.g. `~/go`. Also make sure you have `git` installed for access from the CLI.
 
-Fetch the code and dependencies, build and run it:
+Fetch the code and dependencies, and build:
 
 ```
 go get github.com/lietu/pusud
 cd $GOPATH/src/github.com/lietu/pusud
 go build pusud.go
+```
+
+On *nix systems you can then run it with:
+
+```
+./pusud
+```
+
+On Windows it's just:
+
+```
 pusud
+```
+
+During development you can simply build & run it in one command, which is not
+recommended for normal use:
+
+```
+go run pusud.go
 ```
 
 
