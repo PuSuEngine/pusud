@@ -1,0 +1,14 @@
+authenticator: None
+relays:
+  - relay-1.example.com
+  - relay-2.example.com
+client_port: 55000
+network_port: 55001
+allowed_channels:
+  - auction.*
+  - category.*
+  - product.*
+  - users.*
+jwt_signing_algorithms:
+  - HS256
+jwt_verification_key: secret
