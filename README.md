@@ -40,6 +40,13 @@ go run pusud.go
 ```
 
 
+## Client libraries
+
+To deliver messages, you will need to use a client library to send and receive them. The currently available officially supported libraries are listed here:
+
+ * [GoPuSu](https://github.com/lietu/gopusu)
+
+
 ## Configuration
 
 The configuration file uses the [YAML](http://yaml.org/) format.
