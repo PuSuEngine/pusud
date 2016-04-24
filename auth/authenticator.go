@@ -7,7 +7,7 @@ import (
 var authenticators map[string]Authenticator = map[string]Authenticator{}
 
 type Authenticator interface {
-	GetPermissions(name string, authorization string) map[string]Permission
+	GetPermissions(authorization string) map[string]Permission
 }
 
 func RegisterAuthenticator(name string, auth Authenticator) bool {

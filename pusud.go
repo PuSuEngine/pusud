@@ -18,7 +18,7 @@ func main() {
 		log.Fatalf("Couldn't find the configured authenticator")
 	}
 
-	permissions := authenticator.GetPermissions("foo", "bar")
+	permissions := authenticator.GetPermissions("bar")
 
 	for k, p := range permissions {
 		log.Printf("Channel: %s, Read: %t  Write: %t", k, p.Read, p.Write)
