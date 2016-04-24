@@ -6,9 +6,10 @@ import (
 
 const TYPE_HELLO = "hello"
 const TYPE_AUTHORIZE = "authorize"
-const AUTHORIZATION_OK = "authorization_ok"
+const TYPE_AUTHORIZATION_OK = "authorization_ok"
 const TYPE_PUBLISH = "publish"
 const TYPE_SUBSCRIBE = "subscribe"
+const TYPE_SUBSCRIBE_OK = "subscribe_ok"
 const TYPE_UNKNOWN_MESSAGE_RECEIVED = "unknown_message_received"
 const TYPE_AUTHORIZATION_FAILED = "authorization_failed"
 const TYPE_PERMISSION_DENIED = "permission_denied"

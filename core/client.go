@@ -10,6 +10,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var DEBUG = false
+
+
 type Client struct {
 	UUID		string
 	Connection  *websocket.Conn
@@ -23,7 +26,10 @@ func (c *Client) Close() {
 
 	if c.Connected {
 		c.Connected = false
-		log.Printf("Closing connection from %s", c.GetRemoteAddr())
+
+		if DEBUG {
+			log.Printf("Closing connection from %s", c.GetRemoteAddr())
+		}
 
 		for _, channel := range(c.Subscriptions) {
 			Unsubscribe(channel, c)
@@ -47,12 +53,16 @@ func (c *Client) SendHello() {
 
 func (c *Client) SendMessage(message messages.Message) {
 	data := message.ToJson()
-	log.Printf("Sending message %s to %s", data, c.GetRemoteAddr())
+	if DEBUG {
+		log.Printf("Sending message %s to %s", data, c.GetRemoteAddr())
+	}
 	c.Connection.WriteMessage(websocket.TextMessage, data)
 }
 
 func (c *Client) Authorize(message *messages.Authorize) {
-	log.Printf("Client from %s authorizing with %s", c.GetRemoteAddr(), message.Authorization)
+	if DEBUG {
+		log.Printf("Client from %s authorizing with %s", c.GetRemoteAddr(), message.Authorization)
+	}
 
 	a := GetAuthenticator()
 	perms := a.GetPermissions(message.Authorization)
@@ -77,11 +87,13 @@ func (c *Client) Authorize(message *messages.Authorize) {
 		}
 	}
 
-	c.SendMessage(messages.NewGenericMessage(messages.AUTHORIZATION_OK))
+	c.SendMessage(messages.NewGenericMessage(messages.TYPE_AUTHORIZATION_OK))
 }
 
 func (c *Client) Publish(message *messages.Publish) {
-	log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
+	if DEBUG {
+		log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
+	}
 
 	_, write := c.GetPermissions(message.Channel)
 
@@ -95,7 +107,9 @@ func (c *Client) Publish(message *messages.Publish) {
 }
 
 func (c *Client) Subscribe(message *messages.Subscribe) {
-	log.Printf("Client from %s subscribing to %s", c.GetRemoteAddr(), message.Channel)
+	if DEBUG {
+		log.Printf("Client from %s subscribing to %s", c.GetRemoteAddr(), message.Channel)
+	}
 
 	// Ignore double-subscription
 	if c.IsSubscribed(message.Channel) {
@@ -112,6 +126,7 @@ func (c *Client) Subscribe(message *messages.Subscribe) {
 
 	c.Subscriptions = append(c.Subscriptions, message.Channel)
 	Subscribe(message.Channel, c)
+	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
 }
 
 func (c *Client) IsSubscribed(channel string) bool {
