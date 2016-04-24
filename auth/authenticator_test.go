@@ -9,8 +9,8 @@ type FakeAuthenticator struct {
 
 }
 
-func (na FakeAuthenticator) GetPermissions(authorization string) map[string]Permission {
-	d := map[string]Permission{};
+func (na FakeAuthenticator) GetPermissions(authorization string) Permissions {
+	d := Permissions{};
 	return d
 }
 
@@ -39,9 +39,9 @@ func TestGetAuthenticator(t *testing.T) {
 }
 
 func TestGetChannelPermissions(t *testing.T) {
-	perms := map[string]Permission{}
-	perms["user.*"] = Permission{true, false}
-	perms["write.*"] = Permission{false, true}
+	perms := Permissions{}
+	perms["user.*"] = &Permission{true, false}
+	perms["write.*"] = &Permission{false, true}
 
 	read, write := GetChannelPermissions("users", perms)
 	if read || write {
@@ -64,7 +64,7 @@ func TestGetChannelPermissions(t *testing.T) {
 	}
 
 	// Give read access to everything
-	perms["*"] = Permission{true, false}
+	perms["*"] = &Permission{true, false}
 	// Now "write.*" should have both read and write
 
 	read, write = GetChannelPermissions("write.1", perms)

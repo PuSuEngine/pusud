@@ -4,9 +4,9 @@ type NoAuthenticator struct {
 
 }
 
-func (na NoAuthenticator) GetPermissions(authorization string) map[string]Permission {
-	d := map[string]Permission{};
-	d["*"] = Permission{true, true}
+func (na NoAuthenticator) GetPermissions(authorization string) Permissions {
+	d := Permissions{};
+	d["*"] = &Permission{true, true}
 	return d
 }
 

@@ -18,16 +18,7 @@ func main() {
 		log.Fatalf("Couldn't find the configured authenticator")
 	}
 
-	permissions := authenticator.GetPermissions("bar")
-
-	for k, p := range permissions {
-		log.Printf("Channel: %s, Read: %t  Write: %t", k, p.Read, p.Write)
-	}
-
-	channels := []string{"user", "user.1234", "users"}
-
-	for _, v := range channels {
-		read, write := auth.GetChannelPermissions(v, permissions)
-		log.Printf("Channel: %s, Read: %t  Write: %t", v, read, write)
-	}
+	core.SetAuthenticator(authenticator)
+	core.SetupNetwork(settings)
+	core.StartListeners(settings, authenticator)
 }

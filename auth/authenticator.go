@@ -7,7 +7,7 @@ import (
 var authenticators map[string]Authenticator = map[string]Authenticator{}
 
 type Authenticator interface {
-	GetPermissions(authorization string) map[string]Permission
+	GetPermissions(authorization string) Permissions
 }
 
 func RegisterAuthenticator(name string, auth Authenticator) bool {
@@ -46,7 +46,7 @@ func GetAuthenticator(name string) (Authenticator, bool) {
 	return auth, true
 }
 
-func GetChannelPermissions(name string, permissions map[string]Permission) (bool, bool) {
+func GetChannelPermissions(name string, permissions Permissions) (bool, bool) {
 	var read bool
 	var write bool
 

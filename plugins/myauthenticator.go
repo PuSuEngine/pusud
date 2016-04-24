@@ -6,10 +6,8 @@ type MyAuthenticator struct {
 
 }
 
-func (ma MyAuthenticator) GetPermissions(authorization string) map[string]auth.Permission {
-	d := map[string]auth.Permission{}
-	d["*"] = auth.Permission{true, false}
-	d["user.*"] = auth.Permission{true, true}
+func (ma MyAuthenticator) GetPermissions(authorization string) auth.Permissions {
+	d := auth.Permissions{}
 	return d
 }
 
