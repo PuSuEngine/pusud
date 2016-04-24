@@ -24,9 +24,12 @@ type Client struct {
 	Write PermissionCache
 }
 
+var clients int64 = 0
+
 func (c *Client) Close() {
 
 	if c.Connected {
+		clients--
 		c.Connected = false
 
 		if DEBUG {
@@ -199,6 +202,8 @@ func NewClient(conn *websocket.Conn, req *http.Request) *Client {
 	c.Connected = true
 	c.Subscriptions = []string{}
 	c.Write = PermissionCache{}
+
+	clients++
 
 	return &c
 }

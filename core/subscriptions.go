@@ -10,6 +10,7 @@ type PublishOrder struct {
 	Data []byte
 }
 
+var published int64 = 0
 var publish = make(chan PublishOrder)
 
 func Subscribe(channel string, client *Client) {
@@ -45,6 +46,7 @@ func Publish(channel string, data []byte) {
 	}
 
 	for _, c := range(channels[channel]) {
+		published++
 		c.SendRaw(data)
 	}
 }

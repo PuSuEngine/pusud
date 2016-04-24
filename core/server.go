@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log"
+	"time"
 	"github.com/lietu/pusud/auth"
 	"net/http"
 	"github.com/gorilla/websocket"
@@ -11,6 +12,7 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func StartListeners(settings *Settings, authenticator auth.Authenticator) {
+	go statusMonitor()
 	go runNetworkListener(settings.NetworkPort)
 	runClientListener(settings.ClientPort, authenticator)
 }
@@ -37,7 +39,6 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func runClientListener(port int, authenticator auth.Authenticator) {
-
 	address := fmt.Sprintf("0.0.0.0:%d", port)
 
 	log.Printf("Starting to listen for client connections on %s", address)
@@ -45,6 +46,15 @@ func runClientListener(port int, authenticator auth.Authenticator) {
 	http.HandleFunc("/", websocketHandler)
 
 	log.Fatal(http.ListenAndServe(address, nil))
+}
+
+func statusMonitor() {
+	for {
+		time.Sleep(time.Second * 30)
+		log.Printf("Currently have %d connected clients", clients)
+		log.Printf("Have delivered %d messages since last update", published)
+		published = 0
+	}
 }
 
 func AllowOrigin(r *http.Request) bool {
