@@ -46,9 +46,9 @@ func GetAuthenticator(name string) (Authenticator, bool) {
 	return auth, true
 }
 
-func GetChannelPermissions(name string, permissions Permissions) (bool, bool) {
-	var read bool
-	var write bool
+func GetChannelPermissions(name string, permissions Permissions) (read bool, write bool) {
+	read = false
+	write = false
 
 	for k, p := range permissions {
 		if ChannelMatch(name, k) {

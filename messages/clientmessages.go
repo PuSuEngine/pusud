@@ -5,11 +5,6 @@ import (
 	"encoding/json"
 )
 
-const TYPE_HELLO = "hello"
-const TYPE_AUTHORIZE = "authorize"
-const TYPE_UNKNOWN_MESSAGE_RECEIVED = "unknown_message_received"
-const TYPE_AUTHORIZATION_FAILED = "authorization_failed"
-
 
 type ClientMessage struct {
 	Type string `json:"type"`
@@ -18,6 +13,7 @@ type ClientMessage struct {
 
 type Hello struct {
 	Type string `json:"type"`
+	// TODO: Version, etc.
 }
 
 func (h *Hello) ToJson() []byte {
@@ -38,6 +34,47 @@ func NewHello() Message {
 }
 
 
+type Publish struct {
+	Type    string `json:"type"`
+	Channel string `json:"channel"`
+	Content string `json:"content"`
+}
+
+func (p *Publish) ToJson() []byte {
+	result, err := json.Marshal(&p)
+
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	return result
+}
+
+func NewPublish() Message {
+	return &Publish{}
+}
+
+
+type Subscribe struct {
+	Type    string `json:"type"`
+	Channel string `json:"channel"`
+}
+
+func (s *Subscribe) ToJson() []byte {
+	result, err := json.Marshal(&s)
+
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
+	return result
+}
+
+func NewSubscribe() Message {
+	return &Subscribe{}
+}
+
+
 type Authorize struct {
 	Type          string `json:"type"`
 	Authorization string `json:"authorization"`
@@ -54,14 +91,13 @@ func (m *Authorize) ToJson() []byte {
 }
 
 func NewAuthorize() Message {
-	a := Authorize{}
-	a.Type = TYPE_AUTHORIZE
-
-	return &a
+	return &Authorize{}
 }
 
 
 func init() {
 	RegisterIncomingMessageType(TYPE_HELLO, NewHello)
 	RegisterIncomingMessageType(TYPE_AUTHORIZE, NewAuthorize)
+	RegisterIncomingMessageType(TYPE_PUBLISH, NewPublish)
+	RegisterIncomingMessageType(TYPE_SUBSCRIBE, NewSubscribe)
 }

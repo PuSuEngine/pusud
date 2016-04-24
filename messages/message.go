@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 )
 
-var messageTypes = map[string]MessageConstructor{}
-
 type Message interface {
 	ToJson() []byte
 }
@@ -31,25 +29,4 @@ func NewGenericMessage(messageType string) Message {
 	g := GenericMessage{}
 	g.Type = messageType
 	return &g
-}
-
-func NewMessageFromContent(content []byte) Message {
-	um := GenericMessage{}
-	json.Unmarshal(content, &um)
-
-	var constructor MessageConstructor
-	constructor, _ = messageTypes[um.Type]
-
-	if constructor == nil {
-		return &um
-	}
-
-	m := constructor()
-	json.Unmarshal(content, &m)
-
-	return m
-}
-
-func RegisterIncomingMessageType(name string, constructor MessageConstructor) {
-	messageTypes[name] = constructor
 }

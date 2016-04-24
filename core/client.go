@@ -1,18 +1,22 @@
 package core
 
 import (
-	"log"
-	"net/http"
-	"github.com/gorilla/websocket"
 	"github.com/lietu/pusud/auth"
 	"github.com/lietu/pusud/messages"
+
+	"log"
+	"net/http"
+	"github.com/nu7hatch/gouuid"
+	"github.com/gorilla/websocket"
 )
 
 type Client struct {
+	UUID		string
 	Connection  *websocket.Conn
 	Request     *http.Request
 	Permissions auth.Permissions
 	Connected   bool
+	Subscriptions []string
 }
 
 func (c *Client) Close() {
@@ -20,13 +24,21 @@ func (c *Client) Close() {
 	if c.Connected {
 		c.Connected = false
 		log.Printf("Closing connection from %s", c.GetRemoteAddr())
-		// TODO: De-register listeners
+
+		for _, channel := range(c.Subscriptions) {
+			Unsubscribe(channel, c)
+		}
+
 		c.Connection.Close()
 	}
 }
 
 func (c *Client) GetRemoteAddr() string {
 	return c.Request.RemoteAddr
+}
+
+func (c *Client) GetPermissions(channel string) (read bool, write bool) {
+	return auth.GetChannelPermissions(channel, c.Permissions)
 }
 
 func (c *Client) SendHello() {
@@ -64,6 +76,52 @@ func (c *Client) Authorize(message *messages.Authorize) {
 			c.Permissions[channel] = perm
 		}
 	}
+
+	c.SendMessage(messages.NewGenericMessage(messages.AUTHORIZATION_OK))
+}
+
+func (c *Client) Publish(message *messages.Publish) {
+	log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
+
+	_, write := c.GetPermissions(message.Channel)
+
+	if !write {
+		c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
+		c.Close()
+		return
+	}
+
+	Publish(message)
+}
+
+func (c *Client) Subscribe(message *messages.Subscribe) {
+	log.Printf("Client from %s subscribing to %s", c.GetRemoteAddr(), message.Channel)
+
+	// Ignore double-subscription
+	if c.IsSubscribed(message.Channel) {
+		return
+	}
+
+	read, _ := c.GetPermissions(message.Channel)
+
+	if !read {
+		c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
+		c.Close()
+		return
+	}
+
+	c.Subscriptions = append(c.Subscriptions, message.Channel)
+	Subscribe(message.Channel, c)
+}
+
+func (c *Client) IsSubscribed(channel string) bool {
+	for _, cn := range(c.Subscriptions) {
+		if cn == channel {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Client) ReadMessage(content []byte) {
@@ -71,6 +129,10 @@ func (c *Client) ReadMessage(content []byte) {
 
 	if a, ok := m.(*messages.Authorize); ok {
 		c.Authorize(a)
+	} else if p, ok := m.(*messages.Publish); ok {
+		c.Publish(p)
+	} else if s, ok := m.(*messages.Subscribe); ok {
+		c.Subscribe(s)
 	} else {
 		// Unknown message type
 		c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNKNOWN_MESSAGE_RECEIVED))
@@ -81,8 +143,6 @@ func (c *Client) ReadMessage(content []byte) {
 func (c *Client) Handle() {
 	for {
 		_, message, err := c.Connection.ReadMessage()
-
-		log.Printf("%s", message)
 
 		if err != nil {
 			if err.Error() == "websocket: close 1001 " {
@@ -99,11 +159,19 @@ func (c *Client) Handle() {
 }
 
 func NewClient(conn *websocket.Conn, req *http.Request) *Client {
+	id, err := uuid.NewV4()
+
+	if err != nil {
+		log.Fatalf("UUID error: %s", err.Error())
+	}
+
 	c := Client{}
+	c.UUID = id.String()
 	c.Connection = conn
 	c.Request = req
 	c.Permissions = auth.Permissions{}
 	c.Connected = true
+	c.Subscriptions = []string{}
 
 	return &c
 }
