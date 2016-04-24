@@ -10,8 +10,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var DEBUG = false
+const DEBUG = false
 
+type PermissionCache map[string]bool
 
 type Client struct {
 	UUID		string
@@ -20,6 +21,7 @@ type Client struct {
 	Permissions auth.Permissions
 	Connected   bool
 	Subscriptions []string
+	Write PermissionCache
 }
 
 func (c *Client) Close() {
@@ -56,6 +58,11 @@ func (c *Client) SendMessage(message messages.Message) {
 	if DEBUG {
 		log.Printf("Sending message %s to %s", data, c.GetRemoteAddr())
 	}
+
+	c.SendRaw(data)
+}
+
+func (c *Client) SendRaw(data []byte) {
 	c.Connection.WriteMessage(websocket.TextMessage, data)
 }
 
@@ -90,20 +97,24 @@ func (c *Client) Authorize(message *messages.Authorize) {
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_AUTHORIZATION_OK))
 }
 
-func (c *Client) Publish(message *messages.Publish) {
+func (c *Client) Publish(message *messages.Publish, data []byte) {
 	if DEBUG {
 		log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
 	}
 
-	_, write := c.GetPermissions(message.Channel)
-
-	if !write {
-		c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
-		c.Close()
-		return
+	// We only need to check write permission once
+	if _, ok := c.Write[message.Channel]; !ok {
+		_, write := c.GetPermissions(message.Channel)
+		if !write {
+			c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
+			c.Close()
+			return
+		}
+		c.Write[message.Channel] = true
 	}
 
-	Publish(message)
+
+	publish <- PublishOrder{message.Channel, data}
 }
 
 func (c *Client) Subscribe(message *messages.Subscribe) {
@@ -145,7 +156,7 @@ func (c *Client) ReadMessage(content []byte) {
 	if a, ok := m.(*messages.Authorize); ok {
 		c.Authorize(a)
 	} else if p, ok := m.(*messages.Publish); ok {
-		c.Publish(p)
+		c.Publish(p, content)
 	} else if s, ok := m.(*messages.Subscribe); ok {
 		c.Subscribe(s)
 	} else {
@@ -187,6 +198,7 @@ func NewClient(conn *websocket.Conn, req *http.Request) *Client {
 	c.Permissions = auth.Permissions{}
 	c.Connected = true
 	c.Subscriptions = []string{}
+	c.Write = PermissionCache{}
 
 	return &c
 }

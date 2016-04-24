@@ -1,13 +1,16 @@
 package core
 
-import (
-	"github.com/lietu/pusud/messages"
-)
-
 type Clients []*Client
 type Channels map[string]Clients
 
 var channels = Channels{}
+
+type PublishOrder struct {
+	Channel string
+	Data []byte
+}
+
+var publish = make(chan PublishOrder)
 
 func Subscribe(channel string, client *Client) {
 	_, ok := channels[channel]
@@ -33,15 +36,26 @@ func Unsubscribe(channel string, client *Client) {
 	channels[channel] = filtered
 }
 
-func Publish(message *messages.Publish) {
-	_, ok := channels[message.Channel]
+func Publish(channel string, data []byte) {
+	_, ok := channels[channel]
 
 	if !ok {
 		// Nobody listening to this channel, ignore
 		return
 	}
 
-	for _, c := range(channels[message.Channel]) {
-		c.SendMessage(message)
+	for _, c := range(channels[channel]) {
+		c.SendRaw(data)
 	}
+}
+
+func init() {
+	go func() {
+		for {
+			select {
+			case order := <-publish:
+				Publish(order.Channel, order.Data)
+			}
+		}
+	}()
 }
