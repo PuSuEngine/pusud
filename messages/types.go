@@ -12,9 +12,12 @@ const TYPE_SUBSCRIBE = "subscribe"
 const TYPE_SUBSCRIBE_OK = "subscribe_ok"
 const TYPE_UNSUBSCRIBE = "unsubscribe"
 const TYPE_UNSUBSCRIBE_OK = "unsubscribe_ok"
+const TYPE_UNSUBSCRIBABLE_CHANNEL = "unsubscribable_channel"
 const TYPE_UNKNOWN_MESSAGE_RECEIVED = "unknown_message_received"
 const TYPE_AUTHORIZATION_FAILED = "authorization_failed"
 const TYPE_PERMISSION_DENIED = "permission_denied"
+const TYPE_PERMISSION_DENIED_NOT_SUBSCRIBED =
+"permission_denied_not_subscribed"
 
 var messageTypes = map[string]MessageConstructor{}
 

@@ -106,6 +106,8 @@ func (c *client) Publish(message *messages.Publish, data []byte) {
 	}
 	// Don't publish to a channel that client is not subscribed
 	if !c.IsSubscribed(message.Channel) {
+		c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED_NOT_SUBSCRIBED))
+		c.Close()
 		return
 	}
 	// We only need to check write permission once
@@ -145,7 +147,6 @@ func (c *client) Subscribe(message *messages.Subscribe) {
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
 }
 
-
 func (c *client) IsSubscribed(channel string) bool {
 	for _, cn := range c.Subscriptions {
 		if cn == channel {
@@ -161,8 +162,10 @@ func (c *client) Unsubscribe(message *messages.Unsubscribe) {
 		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
 	}
 
-	// Ignore double-subscription
+	// Return
 	if !c.IsSubscribed(message.Channel) {
+		c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNSUBSCRIBABLE_CHANNEL))
+		c.Close()
 		return
 	}
 
