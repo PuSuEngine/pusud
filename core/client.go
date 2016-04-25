@@ -104,7 +104,10 @@ func (c *client) Publish(message *messages.Publish, data []byte) {
 	if debug {
 		log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
 	}
-
+	// Don't publish to a channel that client is not subscribed
+	if !c.IsSubscribed(message.Channel) {
+		return
+	}
 	// We only need to check write permission once
 	if _, ok := c.Write[message.Channel]; !ok {
 		_, write := c.GetPermissions(message.Channel)
@@ -142,6 +145,7 @@ func (c *client) Subscribe(message *messages.Subscribe) {
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
 }
 
+
 func (c *client) IsSubscribed(channel string) bool {
 	for _, cn := range c.Subscriptions {
 		if cn == channel {
@@ -150,6 +154,20 @@ func (c *client) IsSubscribed(channel string) bool {
 	}
 
 	return false
+}
+
+func (c *client) Unsubscribe(message *messages.Unsubscribe) {
+	if debug {
+		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
+	}
+
+	// Ignore double-subscription
+	if !c.IsSubscribed(message.Channel) {
+		return
+	}
+
+	unsubscribe(message.Channel, c)
+	c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNSUBSCRIBE_OK))
 }
 
 func (c *client) ReadMessage(content []byte) {
@@ -161,6 +179,8 @@ func (c *client) ReadMessage(content []byte) {
 		c.Publish(p, content)
 	} else if s, ok := m.(*messages.Subscribe); ok {
 		c.Subscribe(s)
+	} else if s, ok := m.(*messages.Unsubscribe); ok {
+		c.Unsubscribe(s)
 	} else {
 		// Unknown message type
 		c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNKNOWN_MESSAGE_RECEIVED))
