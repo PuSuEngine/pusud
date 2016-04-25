@@ -6,10 +6,14 @@ import (
 
 var authenticators map[string]Authenticator = map[string]Authenticator{}
 
+// An Authenticator figures out what permissions the user should have based on
+// the authorization string they send.
 type Authenticator interface {
 	GetPermissions(authorization string) Permissions
 }
 
+// Register a new Authenticator. You need to call this in your plugin for the
+// Authenticator to be available for use.
 func RegisterAuthenticator(name string, auth Authenticator) bool {
 	_, ok := authenticators[name]
 
@@ -25,6 +29,8 @@ func RegisterAuthenticator(name string, auth Authenticator) bool {
 	return true
 }
 
+// Get an authenticator by the name it was registered. Not very useful outside
+// of main() function.
 func GetAuthenticator(name string) (Authenticator, bool) {
 	auth, ok := authenticators[name]
 
@@ -46,12 +52,15 @@ func GetAuthenticator(name string) (Authenticator, bool) {
 	return auth, true
 }
 
+// Figure out what permissions the given list of permissions gives to the named
+// channel. Merges permissions so if you have e.g. read on "*" and write on "foo"
+// You will have both read & write on "foo".
 func GetChannelPermissions(name string, permissions Permissions) (read bool, write bool) {
 	read = false
 	write = false
 
 	for k, p := range permissions {
-		if ChannelMatch(name, k) {
+		if channelMatch(name, k) {
 			if p.Read {
 				read = true
 			}
@@ -64,7 +73,7 @@ func GetChannelPermissions(name string, permissions Permissions) (read bool, wri
 	return read, write
 }
 
-func ChannelMatch(channel string, match string) bool {
+func channelMatch(channel string, match string) bool {
 	if match == "*" {
 		return true
 	}

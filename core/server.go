@@ -31,7 +31,7 @@ func websocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := NewClient(conn, r)
+	c := newClient(conn, r)
 	defer c.Close()
 
 	c.SendHello()
@@ -51,16 +51,16 @@ func runClientListener(port int, authenticator auth.Authenticator) {
 func statusMonitor() {
 	for {
 		time.Sleep(time.Second * 30)
-		log.Printf("Currently have %d connected clients", clients)
+		log.Printf("Currently have %d connected clients", connectedClients)
 		log.Printf("Have delivered %d messages since last update", published)
 		published = 0
 	}
 }
 
-func AllowOrigin(r *http.Request) bool {
+func allowOrigin(r *http.Request) bool {
 	return true
 }
 
 func init() {
-	upgrader.CheckOrigin = AllowOrigin
+	upgrader.CheckOrigin = allowOrigin
 }

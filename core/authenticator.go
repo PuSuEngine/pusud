@@ -6,10 +6,11 @@ import (
 
 var authenticator auth.Authenticator
 
+// Set the active Authenticator, should probably only be called once, from main()
 func SetAuthenticator(a auth.Authenticator) {
 	authenticator = a
 }
 
-func GetAuthenticator() auth.Authenticator {
+func getAuthenticator() auth.Authenticator {
 	return authenticator
 }

@@ -10,71 +10,71 @@ import (
 	"net/http"
 )
 
-const DEBUG = false
+const debug = false
 
-type PermissionCache map[string]bool
+type permissionCache map[string]bool
 
-type Client struct {
+type client struct {
 	UUID          string
 	Connection    *websocket.Conn
 	Request       *http.Request
 	Permissions   auth.Permissions
 	Connected     bool
 	Subscriptions []string
-	Write         PermissionCache
+	Write         permissionCache
 }
 
-var clients int64 = 0
+var connectedClients int64 = 0
 
-func (c *Client) Close() {
+func (c *client) Close() {
 
 	if c.Connected {
-		clients--
+		connectedClients--
 		c.Connected = false
 
-		if DEBUG {
+		if debug {
 			log.Printf("Closing connection from %s", c.GetRemoteAddr())
 		}
 
 		for _, channel := range c.Subscriptions {
-			Unsubscribe(channel, c)
+			unsubscribe(channel, c)
 		}
 
 		c.Connection.Close()
 	}
 }
 
-func (c *Client) GetRemoteAddr() string {
+func (c *client) GetRemoteAddr() string {
 	return c.Request.RemoteAddr
 }
 
-func (c *Client) GetPermissions(channel string) (read bool, write bool) {
+func (c *client) GetPermissions(channel string) (read bool, write bool) {
 	return auth.GetChannelPermissions(channel, c.Permissions)
 }
 
-func (c *Client) SendHello() {
+func (c *client) SendHello() {
 	c.SendMessage(messages.NewHello())
 }
 
-func (c *Client) SendMessage(message messages.Message) {
+func (c *client) SendMessage(message messages.Message) {
 	data := message.ToJson()
-	if DEBUG {
+	if debug {
 		log.Printf("Sending message %s to %s", data, c.GetRemoteAddr())
 	}
 
 	c.SendRaw(data)
 }
 
-func (c *Client) SendRaw(data []byte) {
+func (c *client) SendRaw(data []byte) {
 	c.Connection.WriteMessage(websocket.TextMessage, data)
 }
 
-func (c *Client) Authorize(message *messages.Authorize) {
-	if DEBUG {
+func (c *client) Authorize(message *messages.Authorize) {
+	if debug {
 		log.Printf("Client from %s authorizing with %s", c.GetRemoteAddr(), message.Authorization)
 	}
 
-	a := GetAuthenticator()
+	a := getAuthenticator()
 	perms := a.GetPermissions(message.Authorization)
 
 	if len(perms) == 0 {
@@ -100,8 +100,8 @@ func (c *Client) Authorize(message *messages.Authorize) {
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_AUTHORIZATION_OK))
 }
 
-func (c *Client) Publish(message *messages.Publish, data []byte) {
-	if DEBUG {
+func (c *client) Publish(message *messages.Publish, data []byte) {
+	if debug {
 		log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
 	}
 
@@ -116,11 +116,11 @@ func (c *Client) Publish(message *messages.Publish, data []byte) {
 		c.Write[message.Channel] = true
 	}
 
-	publish <- PublishOrder{message.Channel, data}
+	publishCn <- publishOrder{message.Channel, data}
 }
 
-func (c *Client) Subscribe(message *messages.Subscribe) {
-	if DEBUG {
+func (c *client) Subscribe(message *messages.Subscribe) {
+	if debug {
 		log.Printf("Client from %s subscribing to %s", c.GetRemoteAddr(), message.Channel)
 	}
 
@@ -138,11 +138,11 @@ func (c *Client) Subscribe(message *messages.Subscribe) {
 	}
 
 	c.Subscriptions = append(c.Subscriptions, message.Channel)
-	Subscribe(message.Channel, c)
+	subscribe(message.Channel, c)
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
 }
 
-func (c *Client) IsSubscribed(channel string) bool {
+func (c *client) IsSubscribed(channel string) bool {
 	for _, cn := range c.Subscriptions {
 		if cn == channel {
 			return true
@@ -152,7 +152,7 @@ func (c *Client) IsSubscribed(channel string) bool {
 	return false
 }
 
-func (c *Client) ReadMessage(content []byte) {
+func (c *client) ReadMessage(content []byte) {
 	m := messages.NewMessageFromContent(content)
 
 	if a, ok := m.(*messages.Authorize); ok {
@@ -168,7 +168,7 @@ func (c *Client) ReadMessage(content []byte) {
 	}
 }
 
-func (c *Client) Handle() {
+func (c *client) Handle() {
 	for {
 		_, message, err := c.Connection.ReadMessage()
 
@@ -186,23 +186,23 @@ func (c *Client) Handle() {
 	}
 }
 
-func NewClient(conn *websocket.Conn, req *http.Request) *Client {
+func newClient(conn *websocket.Conn, req *http.Request) *client {
 	id, err := uuid.NewV4()
 
 	if err != nil {
 		log.Fatalf("UUID error: %s", err.Error())
 	}
 
-	c := Client{}
+	c := client{}
 	c.UUID = id.String()
 	c.Connection = conn
 	c.Request = req
 	c.Permissions = auth.Permissions{}
 	c.Connected = true
 	c.Subscriptions = []string{}
-	c.Write = PermissionCache{}
+	c.Write = permissionCache{}
 
-	clients++
+	connectedClients++
 
 	return &c
 }

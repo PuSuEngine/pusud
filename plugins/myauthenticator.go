@@ -2,16 +2,16 @@ package plugins
 
 import "github.com/lietu/pusud/auth"
 
-type MyAuthenticator struct {
+type myAuthenticator struct {
 }
 
-func (ma MyAuthenticator) GetPermissions(authorization string) auth.Permissions {
+func (ma myAuthenticator) GetPermissions(authorization string) auth.Permissions {
 	d := auth.Permissions{}
 	return d
 }
 
 func init() {
-	ma := MyAuthenticator{}
+	ma := myAuthenticator{}
 
 	auth.RegisterAuthenticator("MyAuthenticator", ma)
 }

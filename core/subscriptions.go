@@ -1,51 +1,50 @@
 package core
 
-type Clients []*Client
-type Channels map[string]Clients
+type clients []*client
+type channels map[string]clients
 
-var channels = Channels{}
+var subscriptions = channels{}
 
-type PublishOrder struct {
+type publishOrder struct {
 	Channel string
 	Data    []byte
 }
 
 var published int64 = 0
-var publish = make(chan PublishOrder)
 
-func Subscribe(channel string, client *Client) {
-	_, ok := channels[channel]
+func subscribe(channel string, client *client) {
+	_, ok := subscriptions[channel]
 
 	if !ok {
-		channels[channel] = Clients{}
+		subscriptions[channel] = clients{}
 	}
 
-	channels[channel] = append(channels[channel], client)
+	subscriptions[channel] = append(subscriptions[channel], client)
 }
 
-func Unsubscribe(channel string, client *Client) {
-	filtered := Clients{}
+func unsubscribe(channel string, client *client) {
+	filtered := clients{}
 
 	// Probably can't handle unsubscribing from a non-existent channel, but
 	// that's ok, as this should never get called for one.
-	for _, c := range channels[channel] {
+	for _, c := range subscriptions[channel] {
 		if c.UUID != client.UUID {
 			filtered = append(filtered, c)
 		}
 	}
 
-	channels[channel] = filtered
+	subscriptions[channel] = filtered
 }
 
-func Publish(channel string, data []byte) {
-	_, ok := channels[channel]
+func publish(channel string, data []byte) {
+	_, ok := subscriptions[channel]
 
 	if !ok {
 		// Nobody listening to this channel, ignore
 		return
 	}
 
-	for _, c := range channels[channel] {
+	for _, c := range subscriptions[channel] {
 		published++
 		c.SendRaw(data)
 	}
@@ -55,8 +54,8 @@ func init() {
 	go func() {
 		for {
 			select {
-			case order := <-publish:
-				Publish(order.Channel, order.Data)
+			case order := <-publishCn:
+				publish(order.Channel, order.Data)
 			}
 		}
 	}()
