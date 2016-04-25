@@ -11,6 +11,7 @@ type publishOrder struct {
 }
 
 var published int64 = 0
+var publishCn = make(chan publishOrder)
 
 func subscribe(channel string, client *client) {
 	_, ok := subscriptions[channel]
