@@ -14,7 +14,6 @@ const TYPE_UNKNOWN_MESSAGE_RECEIVED = "unknown_message_received"
 const TYPE_AUTHORIZATION_FAILED = "authorization_failed"
 const TYPE_PERMISSION_DENIED = "permission_denied"
 
-
 var messageTypes = map[string]MessageConstructor{}
 
 func RegisterIncomingMessageType(name string, constructor MessageConstructor) {

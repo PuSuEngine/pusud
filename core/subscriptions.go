@@ -7,7 +7,7 @@ var channels = Channels{}
 
 type PublishOrder struct {
 	Channel string
-	Data []byte
+	Data    []byte
 }
 
 var published int64 = 0
@@ -28,7 +28,7 @@ func Unsubscribe(channel string, client *Client) {
 
 	// Probably can't handle unsubscribing from a non-existent channel, but
 	// that's ok, as this should never get called for one.
-	for _, c := range (channels[channel]) {
+	for _, c := range channels[channel] {
 		if c.UUID != client.UUID {
 			filtered = append(filtered, c)
 		}
@@ -45,7 +45,7 @@ func Publish(channel string, data []byte) {
 		return
 	}
 
-	for _, c := range(channels[channel]) {
+	for _, c := range channels[channel] {
 		published++
 		c.SendRaw(data)
 	}

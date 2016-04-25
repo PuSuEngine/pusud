@@ -2,11 +2,11 @@ package core
 
 import (
 	"fmt"
-	"log"
-	"time"
-	"github.com/lietu/pusud/auth"
-	"net/http"
 	"github.com/gorilla/websocket"
+	"github.com/lietu/pusud/auth"
+	"log"
+	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{}

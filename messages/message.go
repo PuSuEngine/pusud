@@ -1,8 +1,8 @@
 package messages
 
 import (
-	"log"
 	"encoding/json"
+	"log"
 )
 
 type Message interface {

@@ -3,7 +3,6 @@ package plugins
 import "github.com/lietu/pusud/auth"
 
 type MyAuthenticator struct {
-
 }
 
 func (ma MyAuthenticator) GetPermissions(authorization string) auth.Permissions {

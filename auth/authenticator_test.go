@@ -4,16 +4,13 @@ import (
 	"testing"
 )
 
-
 type FakeAuthenticator struct {
-
 }
 
 func (na FakeAuthenticator) GetPermissions(authorization string) Permissions {
-	d := Permissions{};
+	d := Permissions{}
 	return d
 }
-
 
 func TestRegisterAuthenticator(t *testing.T) {
 	if !RegisterAuthenticator("fake", FakeAuthenticator{}) {

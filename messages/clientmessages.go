@@ -1,15 +1,13 @@
 package messages
 
 import (
-	"log"
 	"encoding/json"
+	"log"
 )
-
 
 type ClientMessage struct {
 	Type string `json:"type"`
 }
-
 
 type Hello struct {
 	Type string `json:"type"`
@@ -33,7 +31,6 @@ func NewHello() Message {
 	return &h
 }
 
-
 type Publish struct {
 	Type    string `json:"type"`
 	Channel string `json:"channel"`
@@ -54,7 +51,6 @@ func NewPublish() Message {
 	return &Publish{}
 }
 
-
 type Subscribe struct {
 	Type    string `json:"type"`
 	Channel string `json:"channel"`
@@ -74,7 +70,6 @@ func NewSubscribe() Message {
 	return &Subscribe{}
 }
 
-
 type Authorize struct {
 	Type          string `json:"type"`
 	Authorization string `json:"authorization"`
@@ -93,7 +88,6 @@ func (m *Authorize) ToJson() []byte {
 func NewAuthorize() Message {
 	return &Authorize{}
 }
-
 
 func init() {
 	RegisterIncomingMessageType(TYPE_HELLO, NewHello)

@@ -4,10 +4,10 @@ import (
 	"github.com/lietu/pusud/auth"
 	"github.com/lietu/pusud/messages"
 
+	"github.com/gorilla/websocket"
+	"github.com/nu7hatch/gouuid"
 	"log"
 	"net/http"
-	"github.com/nu7hatch/gouuid"
-	"github.com/gorilla/websocket"
 )
 
 const DEBUG = false
@@ -15,13 +15,13 @@ const DEBUG = false
 type PermissionCache map[string]bool
 
 type Client struct {
-	UUID		string
-	Connection  *websocket.Conn
-	Request     *http.Request
-	Permissions auth.Permissions
-	Connected   bool
+	UUID          string
+	Connection    *websocket.Conn
+	Request       *http.Request
+	Permissions   auth.Permissions
+	Connected     bool
 	Subscriptions []string
-	Write PermissionCache
+	Write         PermissionCache
 }
 
 var clients int64 = 0
@@ -36,7 +36,7 @@ func (c *Client) Close() {
 			log.Printf("Closing connection from %s", c.GetRemoteAddr())
 		}
 
-		for _, channel := range(c.Subscriptions) {
+		for _, channel := range c.Subscriptions {
 			Unsubscribe(channel, c)
 		}
 
@@ -84,7 +84,7 @@ func (c *Client) Authorize(message *messages.Authorize) {
 		return
 	}
 
-	for channel, perm := range (perms) {
+	for channel, perm := range perms {
 		old, ok := c.Permissions[channel]
 
 		if ok {
@@ -116,7 +116,6 @@ func (c *Client) Publish(message *messages.Publish, data []byte) {
 		c.Write[message.Channel] = true
 	}
 
-
 	publish <- PublishOrder{message.Channel, data}
 }
 
@@ -144,7 +143,7 @@ func (c *Client) Subscribe(message *messages.Subscribe) {
 }
 
 func (c *Client) IsSubscribed(channel string) bool {
-	for _, cn := range(c.Subscriptions) {
+	for _, cn := range c.Subscriptions {
 		if cn == channel {
 			return true
 		}

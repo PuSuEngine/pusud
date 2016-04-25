@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/lietu/pusud/core"
 	"github.com/lietu/pusud/auth"
+	"github.com/lietu/pusud/core"
 	_ "github.com/lietu/pusud/plugins"
 	"log"
 )

@@ -1,19 +1,19 @@
 package core
 
 import (
-	"os"
-	"log"
-	"io/ioutil"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
 var settingsFilename = "settings.yaml"
 
 type Settings struct {
-	Authenticator   string `yaml:"authenticator"`
+	Authenticator   string   `yaml:"authenticator"`
 	Relays          []string `yaml:"relays"`
-	ClientPort      int `yaml:"client_port"`
-	NetworkPort     int `yaml:"network_port"`
+	ClientPort      int      `yaml:"client_port"`
+	NetworkPort     int      `yaml:"network_port"`
 	AllowedChannels []string `yaml:"allowed_channels"`
 }
 
