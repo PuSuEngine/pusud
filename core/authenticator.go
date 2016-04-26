@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/lietu/pusud/auth"
+	"github.com/PuSuEngine/pusud/auth"
 )
 
 var authenticator auth.Authenticator
