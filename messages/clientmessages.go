@@ -71,7 +71,7 @@ func (s *Subscribe) ToJson() []byte {
 	return result
 }
 
-func (s *Unsubscribe) ToJson() []byte  {
+func (s *Unsubscribe) ToJson() []byte {
 	result, err := json.Marshal(&s)
 
 	if err != nil {
