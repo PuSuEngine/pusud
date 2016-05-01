@@ -1,9 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/lietu/pusud/auth"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
