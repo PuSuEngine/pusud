@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
+	"github.com/PuSuEngine/pusud/auth"
 	"github.com/gorilla/websocket"
-	"github.com/lietu/pusud/auth"
 	"log"
 	"net/http"
 	"time"

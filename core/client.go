@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/lietu/pusud/auth"
-	"github.com/lietu/pusud/messages"
+	"github.com/PuSuEngine/pusud/auth"
+	"github.com/PuSuEngine/pusud/messages"
 
 	"github.com/gorilla/websocket"
 	"github.com/nu7hatch/gouuid"

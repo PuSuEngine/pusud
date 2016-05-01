@@ -15,8 +15,8 @@ After running the installer, make sure you set up your `PATH` and `GOPATH` appro
 Fetch the code and dependencies, and build:
 
 ```
-go get github.com/lietu/pusud
-cd $GOPATH/src/github.com/lietu/pusud
+go get github.com/PuSuEngine/pusud
+cd $GOPATH/src/github.com/PuSuEngine/pusud
 go build pusud.go
 ```
 
@@ -44,7 +44,7 @@ go run pusud.go
 
 To deliver messages, you will need to use a client library to send and receive them. The currently available officially supported libraries are listed here:
 
- * [GoPuSu](https://github.com/lietu/gopusu)
+ * [GoPuSu](https://github.com/PuSuEngine/gopusu)
 
 
 ## Configuration
