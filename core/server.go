@@ -1,12 +1,12 @@
 package core
 
 import (
+	"github.com/gorilla/websocket"
+	"github.com/lietu/pusud/auth"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
-	"github.com/gorilla/websocket"
-	"github.com/lietu/pusud/auth"
 )
 
 var upgrader = websocket.Upgrader{}
