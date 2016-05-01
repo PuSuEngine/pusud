@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 	"github.com/gorilla/websocket"
-	"github.com/PuSuEngine/pusud/auth"
+	"github.com/lietu/pusud/auth"
 )
 
 var upgrader = websocket.Upgrader{}

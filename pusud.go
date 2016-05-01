@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/PuSuEngine/pusud/auth"
-	"github.com/PuSuEngine/pusud/core"
-	_ "github.com/PuSuEngine/pusud/plugins"
+	"github.com/lietu/pusud/auth"
+	"github.com/lietu/pusud/core"
+	_ "github.com/lietu/pusud/plugins"
 	"log"
 )
 

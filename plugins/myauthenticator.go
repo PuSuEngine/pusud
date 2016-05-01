@@ -1,6 +1,6 @@
 package plugins
 
-import "github.com/PuSuEngine/pusud/auth"
+import "github.com/lietu/pusud/auth"
 
 type myAuthenticator struct {
 }
