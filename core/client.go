@@ -125,7 +125,7 @@ func (c *client) Subscribe(message *messages.Subscribe) {
 	}
 
 	// Ignore double-subscription
-	if c.IsSubscribed(message.Channel) {
+ 	if c.IsSubscribed(message.Channel) {
 		return
 	}
 
@@ -156,6 +156,21 @@ func (c *client) Unsubscribe(message *messages.Unsubscribe) {
 	if debug {
 		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
 	}
+
+	if !c.IsSubscribed(message.Channel) {
+		return
+	}
+
+	var filtered []string
+
+	// Remove channel from Subscriptions for that client
+	for _, c := range c.Subscriptions {
+		if message.Channel != c {
+			filtered = append(filtered, c)
+		}
+	}
+
+	c.Subscriptions = filtered
 	unsubscribe(message.Channel, c)
 }
 
