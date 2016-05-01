@@ -56,11 +56,6 @@ type Subscribe struct {
 	Channel string `json:"channel"`
 }
 
-type Unsubscribe struct {
-	Type    string `json:"type"`
-	Channel string `json:"channel"`
-}
-
 func (s *Subscribe) ToJson() []byte {
 	result, err := json.Marshal(&s)
 
@@ -69,6 +64,11 @@ func (s *Subscribe) ToJson() []byte {
 	}
 
 	return result
+}
+
+type Unsubscribe struct {
+	Type    string `json:"type"`
+	Channel string `json:"channel"`
 }
 
 func (s *Unsubscribe) ToJson() []byte {
