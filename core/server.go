@@ -51,9 +51,16 @@ func runClientListener(port int, authenticator auth.Authenticator) {
 func statusMonitor() {
 	for {
 		time.Sleep(time.Second * 30)
+		log.Printf("")
+		log.Printf("----- Status update -----")
 		log.Printf("Currently have %d connected clients", connectedClients)
-		log.Printf("Have delivered %d messages since last update", published)
-		published = 0
+
+		log.Printf("Received: %d messages", readCounter)
+		readCounter = 0
+
+		log.Printf("Sent    : %d messages", writeCounter)
+		writeCounter = 0
+		log.Printf("")
 	}
 }
 
