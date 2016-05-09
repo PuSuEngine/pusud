@@ -142,16 +142,6 @@ func (c *client) Subscribe(message *messages.Subscribe) {
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
 }
 
-func (c *client) IsSubscribed(channel string) bool {
-	for _, cn := range c.Subscriptions {
-		if cn == channel {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (c *client) Unsubscribe(message *messages.Unsubscribe) {
 	if debug {
 		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
@@ -172,6 +162,16 @@ func (c *client) Unsubscribe(message *messages.Unsubscribe) {
 
 	c.Subscriptions = filtered
 	unsubscribe(message.Channel, c)
+}
+
+func (c *client) IsSubscribed(channel string) bool {
+	for _, cn := range c.Subscriptions {
+		if cn == channel {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *client) ReadMessage(content []byte) {
