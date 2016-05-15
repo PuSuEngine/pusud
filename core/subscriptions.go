@@ -25,8 +25,6 @@ func subscribe(channel string, client *client) {
 func unsubscribe(channel string, client *client) {
 	filtered := clients{}
 
-	// Probably can't handle unsubscribing from a non-existent channel, but
-	// that's ok, as this should never get called for one.
 	for _, c := range subscriptions[channel] {
 		if c.UUID != client.UUID {
 			filtered = append(filtered, c)

@@ -150,7 +150,7 @@ func (c *client) subscribe(message *messages.Subscribe) {
 	}
 
 	// Ignore double-subscription
-	if c.IsSubscribed(message.Channel) {
+ 	if c.IsSubscribed(message.Channel) {
 		return
 	}
 
@@ -165,6 +165,28 @@ func (c *client) subscribe(message *messages.Subscribe) {
 	c.subscriptions = append(c.subscriptions, message.Channel)
 	subscribe(message.Channel, c)
 	c.SendMessage(messages.NewGenericMessage(messages.TYPE_SUBSCRIBE_OK))
+}
+
+func (c *client) unsubscribe(message *messages.Unsubscribe) {
+	if debug {
+		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
+	}
+
+	if !c.IsSubscribed(message.Channel) {
+		return
+	}
+
+	var filtered []string
+
+	// Remove channel from subscriptions for that client
+	for _, c := range c.subscriptions {
+		if message.Channel != c {
+			filtered = append(filtered, c)
+		}
+	}
+
+	c.subscriptions = filtered
+	unsubscribe(message.Channel, c)
 }
 
 func (c *client) IsSubscribed(channel string) bool {
@@ -186,6 +208,8 @@ func (c *client) readMessage(content []byte) {
 		c.publish(p, content)
 	} else if s, ok := m.(*messages.Subscribe); ok {
 		c.subscribe(s)
+	} else if s, ok := m.(*messages.Unsubscribe); ok {
+		c.unsubscribe(s)
 	} else {
 		// Unknown message type
 		c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNKNOWN_MESSAGE_RECEIVED))

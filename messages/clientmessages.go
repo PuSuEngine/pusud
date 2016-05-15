@@ -66,6 +66,20 @@ func (s *Subscribe) ToJson() []byte {
 	return result
 }
 
+type Unsubscribe struct {
+	Type    string `json:"type"`
+	Channel string `json:"channel"`
+}
+
+func (s *Unsubscribe) ToJson() []byte {
+	result, err := json.Marshal(&s)
+
+	if err != nil {
+		log.Fatal("error: %v", err)
+	}
+	return result
+}
+
 func NewSubscribe() Message {
 	return &Subscribe{}
 }
@@ -89,9 +103,14 @@ func NewAuthorize() Message {
 	return &Authorize{}
 }
 
+func NewUnsubscribe() Message {
+	return &Unsubscribe{}
+}
+
 func init() {
 	RegisterIncomingMessageType(TYPE_HELLO, NewHello)
 	RegisterIncomingMessageType(TYPE_AUTHORIZE, NewAuthorize)
 	RegisterIncomingMessageType(TYPE_PUBLISH, NewPublish)
 	RegisterIncomingMessageType(TYPE_SUBSCRIBE, NewSubscribe)
+	RegisterIncomingMessageType(TYPE_UNSUBSCRIBE, NewUnsubscribe)
 }
