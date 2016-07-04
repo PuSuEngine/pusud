@@ -46,6 +46,7 @@ To deliver messages, you will need to use a client library to send and receive t
 
  * [GoPuSu](https://github.com/PuSuEngine/gopusu)
  * [PyPuSu](https://github.com/PuSuEngine/pypusu)
+ * [JSPusu](https://github.com/PuSuEngine/jspusu)
 
 
 ## Configuration
