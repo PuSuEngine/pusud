@@ -1,8 +1,13 @@
 package core
 
+import (
+	"sync"
+)
+
 type clients []*client
 type channels map[string]clients
 
+var subscriptionMutex = &sync.Mutex{}
 var subscriptions = channels{}
 
 type publishOrder struct {
@@ -13,6 +18,9 @@ type publishOrder struct {
 var publishCn = make(chan publishOrder)
 
 func subscribe(channel string, client *client) {
+	subscriptionMutex.Lock()
+	defer subscriptionMutex.Unlock()
+
 	_, ok := subscriptions[channel]
 
 	if !ok {
@@ -23,6 +31,9 @@ func subscribe(channel string, client *client) {
 }
 
 func unsubscribe(channel string, client *client) {
+	subscriptionMutex.Lock()
+	defer subscriptionMutex.Unlock()
+
 	filtered := clients{}
 
 	for _, c := range subscriptions[channel] {
