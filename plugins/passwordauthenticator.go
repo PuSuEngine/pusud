@@ -55,13 +55,14 @@ func (ma passwordAuthenticator) GetPermissions(authorization string) auth.Permis
 			if DEBUG {
 				log.Printf("Invalid password, got no access to anything")
 			}
-		} else {
-			// Valid password gives READ to all
-			if _, ok := d["*"]; !ok {
-				d["*"] = &auth.Permission{true, false}
-			}
 		}
 	}
+
+	// Everyone has READ to all for now
+	if _, ok := d["*"]; !ok {
+		d["*"] = &auth.Permission{true, false}
+	}
+
 
 	return d
 }
