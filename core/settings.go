@@ -5,9 +5,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"fmt"
 )
 
 var settingsFilename = "settings.yaml"
+var settingsContents *[]byte = nil
+var DEBUG = false
 
 type Settings struct {
 	Authenticator   string   `yaml:"authenticator"`
@@ -17,22 +20,34 @@ type Settings struct {
 	AllowedChannels []string `yaml:"allowed_channels"`
 }
 
-func ReadSettings() *Settings {
-	s := Settings{}
+func GetSettingsContents() *[]byte {
+	if settingsContents == nil {
+		contents, err := ioutil.ReadFile(settingsFilename)
 
-	data, err := ioutil.ReadFile(settingsFilename)
-
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Fatalf("Settings file %s not found. Try copying settings.example.yaml", settingsFilename)
-		} else {
-			log.Fatalf("Error reading settings: %v", err)
+		if err != nil {
+			if os.IsNotExist(err) {
+				log.Fatalf("Settings file %s not found. Try copying settings.example.yaml", settingsFilename)
+			} else {
+				log.Fatalf("Error reading settings: %v", err)
+			}
 		}
+
+		log.Printf("Read settings from %s", settingsFilename)
+
+		settingsContents = &contents
 	}
 
-	log.Printf("Read settings from %s", settingsFilename)
+	return settingsContents
+}
 
-	yaml.Unmarshal(data, &s)
+func GetSettings() *Settings {
+	s := Settings{}
+	data := GetSettingsContents()
+	yaml.Unmarshal(*data, &s)
+
+	if DEBUG {
+		fmt.Printf("%+v\n", s)
+	}
 
 	return &s
 }

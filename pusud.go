@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	settings := core.ReadSettings()
+	settings := core.GetSettings()
 
 	log.Printf("Using %s authenticator", settings.Authenticator)
 

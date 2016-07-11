@@ -9,6 +9,12 @@ allowed_channels:
   - category.*
   - product.*
   - users.*
+passwords:
+  - Password1:
+    - valid.*
+    - channels.*
+  - Password2:
+    - "*"
 jwt_signing_algorithms:
   - HS256
 jwt_verification_key: secret
