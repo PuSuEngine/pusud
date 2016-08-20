@@ -33,9 +33,7 @@ type client struct {
 	write         permissionCache
 	outgoing      chan []byte
 	incoming      chan []byte
-	stop          chan bool
-	stopping      bool
-	mutex		  *sync.Mutex
+	mutex         *sync.Mutex
 }
 
 var connectedClients int64 = 0
@@ -48,14 +46,9 @@ func (c *client) Close() {
 		c.connected = false
 		connectedClients--
 
-		if !c.stopping {
-			c.stop <- true
-		}
-
 		// Close the channels, throw away any extra messages that might be coming our way
 		close(c.outgoing)
 		close(c.incoming)
-		close(c.stop)
 
 		if debug {
 			log.Printf("Closing connection from %s", c.GetRemoteAddr())
@@ -150,7 +143,7 @@ func (c *client) subscribe(message *messages.Subscribe) {
 	}
 
 	// Ignore double-subscription
- 	if c.IsSubscribed(message.Channel) {
+	if c.IsSubscribed(message.Channel) {
 		return
 	}
 
@@ -218,35 +211,39 @@ func (c *client) readMessage(content []byte) {
 }
 
 func (c *client) Send(data []byte) {
+	if !c.connected {
+		return
+	}
+
 	select {
 	case c.outgoing <- data:
-		// Message sent to outgoing queue
+	// Message sent to outgoing queue
 	default:
-		if c.stopping || !c.connected {
-			return
-		}
-
 		log.Printf("Client from %s filled outgoing message queue, dropping connection.", c.GetRemoteAddr())
-		c.stop <- true
+		c.Close()
 	}
 
 }
 
 func (c *client) handleChannels() {
+	if debug {
+		defer func() {
+			log.Printf("%s channels stopped", c.GetRemoteAddr())
+		}()
+	}
+
 	for {
 		select {
-		case <- c.stop:
-			if !c.stopping {
-				c.stopping = true
-				c.Close()
-			}
-			return
-		case msg := <- c.outgoing:
+		case msg := <-c.outgoing:
 			writeCounter++
 			c.sendRaw(msg)
-		case msg := <- c.incoming:
+		case msg := <-c.incoming:
 			readCounter++
 			c.readMessage(msg)
+		}
+
+		if !c.connected {
+			break
 		}
 	}
 }
@@ -265,16 +262,27 @@ func (c *client) Handle() {
 			}
 
 			// Tell the routine to stop
-			c.stop <- true
+			if debug {
+				log.Printf("%s stopping", c.GetRemoteAddr())
+			}
+
+			if c.connected {
+				c.Close()
+			}
+
+			if debug {
+				log.Printf("%s breaking", c.GetRemoteAddr())
+			}
+
 			break
 		} else {
 			select {
 			case c.incoming <- message:
-				// Message was sent to incoming queue
+			// Message was sent to incoming queue
 			default:
-				// Incoming queue was full
+			// Incoming queue was full
 				log.Printf("Client from %s filled incoming message queue, disconnecting.", c.GetRemoteAddr())
-				c.stop <- true
+				c.Close()
 				return
 			}
 		}
@@ -296,10 +304,8 @@ func newClient(conn *websocket.Conn, req *http.Request) *client {
 	c.connected = true
 	c.subscriptions = []string{}
 	c.write = permissionCache{}
-	c.stopping = false
 	c.outgoing = make(chan []byte, OUTGOING_BUFFER)
 	c.incoming = make(chan []byte, INCOMING_BUFFER)
-	c.stop = make(chan bool)
 	c.mutex = &sync.Mutex{}
 
 	connectedClients++

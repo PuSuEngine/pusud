@@ -45,15 +45,23 @@ func unsubscribe(channel string, client *client) {
 	subscriptions[channel] = filtered
 }
 
+func getSubscriptions(channel string) (list clients, ok bool) {
+	subscriptionMutex.Lock()
+	defer subscriptionMutex.Unlock()
+
+	list, ok = subscriptions[channel]
+	return
+}
+
 func publish(channel string, data []byte) {
-	_, ok := subscriptions[channel]
+	clients, ok := getSubscriptions(channel)
 
 	if !ok {
 		// Nobody listening to this channel, ignore
 		return
 	}
 
-	for _, c := range subscriptions[channel] {
+	for _, c := range clients {
 		go c.Send(data)
 	}
 }
