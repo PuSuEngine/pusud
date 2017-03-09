@@ -1,0 +1,15 @@
+FROM alpine:3.5
+
+# you have to do this on every build because i still
+# didn't figure out how to build an image and have it small
+# docker cp containerId:/go/bin/pusud builds
+
+ADD builds/pusud /pusud/pusud
+ADD settings.yaml/ /pusud/settings.yaml
+
+WORKDIR /pusud
+
+ENTRYPOINT /pusud/pusud
+
+EXPOSE 55000
+
