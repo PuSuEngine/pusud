@@ -12,6 +12,7 @@ type passwordAuthenticator struct {
 
 type passwordSettings struct {
 	Passwords map[string][]string	`yaml:"passwords"`
+	AllowReadByDefault bool 		`yaml:"allow_read_by_default"`
 }
 
 var settings *passwordSettings
@@ -20,7 +21,10 @@ var DEBUG = false
 func getSettings() *passwordSettings {
 	if settings == nil {
 		data := core.GetSettingsContents()
+
 		s := passwordSettings{}
+		s.AllowReadByDefault = false
+
 		yaml.Unmarshal(*data, &s)
 		settings = &s
 	}
@@ -31,13 +35,13 @@ func getSettings() *passwordSettings {
 func (ma passwordAuthenticator) GetPermissions(authorization string) auth.Permissions {
 	d := auth.Permissions{}
 
+	s := getSettings()
 	if authorization == "" {
 		if DEBUG {
 			log.Printf("No password provided")
 		}
 	} else {
 		match := false
-		s := getSettings()
 		// map is password -> list of channels
 		for k, v := range s.Passwords {
 			if k == authorization {
@@ -58,11 +62,12 @@ func (ma passwordAuthenticator) GetPermissions(authorization string) auth.Permis
 		}
 	}
 
-	// Everyone has READ to all for now
-	if _, ok := d["*"]; !ok {
-		d["*"] = &auth.Permission{true, false}
+	// The default permissions from config
+	if s.AllowReadByDefault {
+		if _, ok := d["*"]; !ok {
+			d["*"] = &auth.Permission{true, false}
+		}
 	}
-
 
 	return d
 }

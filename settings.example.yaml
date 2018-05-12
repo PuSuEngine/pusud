@@ -15,6 +15,7 @@ passwords:
     - channels.*
   - Password2:
     - "*"
+allow_read_by_default: true
 jwt_signing_algorithms:
   - HS256
 jwt_verification_key: secret
