@@ -64,6 +64,9 @@ func (ma passwordAuthenticator) GetPermissions(authorization string) auth.Permis
 
 	// The default permissions from config
 	if s.AllowReadByDefault {
+        if DEBUG {
+            log.Printf("Adding default read permission")
+        }
 		if _, ok := d["*"]; !ok {
 			d["*"] = &auth.Permission{true, false}
 		}
