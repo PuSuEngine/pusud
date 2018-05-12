@@ -89,8 +89,6 @@ func channelMatch(channel string, match string) bool {
 	}
 
 	if minMatch <= len(channel) {
-		log.Printf("%s vs. %s", channel[:minMatch], match[:minMatch])
-
 		if channel[:minMatch] == match[:minMatch] {
 			return true
 		}
