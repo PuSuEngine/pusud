@@ -15,7 +15,7 @@ After running the installer, make sure you set up your `PATH` and `GOPATH` appro
 Fetch the code and dependencies, and build:
 
 ```
-go get github.com/PuSuEngine/pusud
+go get -u github.com/PuSuEngine/pusud
 cd $GOPATH/src/github.com/PuSuEngine/pusud
 go build pusud.go
 ```
@@ -32,12 +32,16 @@ On Windows it's just:
 pusud
 ```
 
+## Development
+
 During development you can simply build & run it in one command, which is not
 recommended for normal use:
 
 ```
 go run pusud.go
 ```
+
+The dependencies are managed with the [dep](https://github.com/golang/dep) tool.
 
 
 ## Client libraries

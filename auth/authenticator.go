@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-var authenticators map[string]Authenticator = map[string]Authenticator{}
+var authenticators = map[string]Authenticator{}
 
 // An Authenticator figures out what permissions the user should have based on
 // the authorization string they send.
