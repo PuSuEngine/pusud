@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-const debug = false
+const CLIENT_DEBUG = false
 
 // Buffer up to this many messages going out
 const OUTGOING_BUFFER = 100
@@ -29,10 +29,12 @@ type client struct {
 	request       *http.Request
 	permissions   auth.Permissions
 	connected     bool
+	closing		  bool
 	subscriptions []string
 	write         permissionCache
 	outgoing      chan []byte
 	incoming      chan []byte
+	outgoingWG    sync.WaitGroup
 	mutex         *sync.Mutex
 }
 
@@ -42,21 +44,30 @@ func (c *client) Close() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
+	c.closing = true
+
 	if c.connected {
 		c.connected = false
 		connectedClients--
 
-		// Close the channels, throw away any extra messages that might be coming our way
-		close(c.outgoing)
+		// Close the incoming channel, throw away any extra messages that might be coming our way
+		if CLIENT_DEBUG { log.Printf("Closing incoming queue for %s", c.GetRemoteAddr()) }
 		close(c.incoming)
 
-		if debug {
-			log.Printf("Closing connection from %s", c.GetRemoteAddr())
-		}
+		// Wait for the outgoing channel to empty
+		if CLIENT_DEBUG { log.Printf("Waiting for %s outgoing queue", c.GetRemoteAddr()) }
+		c.outgoingWG.Wait()
+
+		if CLIENT_DEBUG { log.Printf("Closing outgoing queue for %s", c.GetRemoteAddr()) }
+		close(c.outgoing)
+
+		if CLIENT_DEBUG { log.Printf("Unsubscribing %s", c.GetRemoteAddr()) }
 
 		for _, channel := range c.subscriptions {
 			unsubscribe(channel, c)
 		}
+
+		if CLIENT_DEBUG { log.Printf("Closing %s", c.GetRemoteAddr()) }
 
 		c.connection.Close()
 	}
@@ -76,7 +87,7 @@ func (c *client) SendHello() {
 
 func (c *client) SendMessage(message messages.Message) {
 	data := message.ToJson()
-	if debug {
+	if CLIENT_DEBUG {
 		log.Printf("Sending message %s to %s", data, c.GetRemoteAddr())
 	}
 
@@ -88,7 +99,7 @@ func (c *client) sendRaw(data []byte) {
 }
 
 func (c *client) authorize(message *messages.Authorize) {
-	if debug {
+	if CLIENT_DEBUG {
 		log.Printf("Client from %s authorizing with %s", c.GetRemoteAddr(), message.Authorization)
 	}
 
@@ -97,8 +108,10 @@ func (c *client) authorize(message *messages.Authorize) {
 
 	if len(perms) == 0 {
 		// No permissions granted -> invalid authorization
-		c.SendMessage(messages.NewGenericMessage(messages.TYPE_AUTHORIZATION_FAILED))
-		c.Close()
+		go func() {
+			c.SendMessage(messages.NewGenericMessage(messages.TYPE_AUTHORIZATION_FAILED))
+			c.Close()
+		}()
 		return
 	}
 
@@ -119,7 +132,7 @@ func (c *client) authorize(message *messages.Authorize) {
 }
 
 func (c *client) publish(message *messages.Publish, data []byte) {
-	if debug {
+	if CLIENT_DEBUG {
 		log.Printf("Client from %s publishing %s to %s", c.GetRemoteAddr(), message.Content, message.Channel)
 	}
 
@@ -127,8 +140,10 @@ func (c *client) publish(message *messages.Publish, data []byte) {
 	if _, ok := c.write[message.Channel]; !ok {
 		_, write := c.GetPermissions(message.Channel)
 		if !write {
-			c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
-			c.Close()
+			go func() {
+				c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
+				c.Close()
+			}()
 			return
 		}
 		c.write[message.Channel] = true
@@ -138,7 +153,7 @@ func (c *client) publish(message *messages.Publish, data []byte) {
 }
 
 func (c *client) subscribe(message *messages.Subscribe) {
-	if debug {
+	if CLIENT_DEBUG {
 		log.Printf("Client from %s subscribing to %s", c.GetRemoteAddr(), message.Channel)
 	}
 
@@ -150,8 +165,10 @@ func (c *client) subscribe(message *messages.Subscribe) {
 	read, _ := c.GetPermissions(message.Channel)
 
 	if !read {
-		c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
-		c.Close()
+		go func() {
+			c.SendMessage(messages.NewGenericMessage(messages.TYPE_PERMISSION_DENIED))
+			c.Close()
+		}()
 		return
 	}
 
@@ -161,7 +178,7 @@ func (c *client) subscribe(message *messages.Subscribe) {
 }
 
 func (c *client) unsubscribe(message *messages.Unsubscribe) {
-	if debug {
+	if CLIENT_DEBUG {
 		log.Printf("Client from %s unsubscribing from %s", c.GetRemoteAddr(), message.Channel)
 	}
 
@@ -205,8 +222,10 @@ func (c *client) readMessage(content []byte) {
 		c.unsubscribe(s)
 	} else {
 		// Unknown message type
-		c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNKNOWN_MESSAGE_RECEIVED))
-		c.Close()
+		go func() {
+			c.SendMessage(messages.NewGenericMessage(messages.TYPE_UNKNOWN_MESSAGE_RECEIVED))
+			c.Close()
+		}()
 	}
 }
 
@@ -215,18 +234,21 @@ func (c *client) Send(data []byte) {
 		return
 	}
 
+	c.outgoingWG.Add(1)
+
 	select {
 	case c.outgoing <- data:
-	// Message sent to outgoing queue
+		// Message sent to outgoing queue
 	default:
 		log.Printf("Client from %s filled outgoing message queue, dropping connection.", c.GetRemoteAddr())
+		c.outgoingWG.Done()
 		c.Close()
 	}
 
 }
 
 func (c *client) handleChannels() {
-	if debug {
+	if CLIENT_DEBUG {
 		defer func() {
 			log.Printf("%s channels stopped", c.GetRemoteAddr())
 		}()
@@ -235,9 +257,18 @@ func (c *client) handleChannels() {
 	for {
 		select {
 		case msg := <-c.outgoing:
+			if msg == nil {
+				break
+			}
+
 			writeCounter++
 			c.sendRaw(msg)
+			c.outgoingWG.Done()
 		case msg := <-c.incoming:
+			if msg == nil {
+				break
+			}
+
 			readCounter++
 			c.readMessage(msg)
 		}
@@ -262,7 +293,7 @@ func (c *client) Handle() {
 			}
 
 			// Tell the routine to stop
-			if debug {
+			if CLIENT_DEBUG {
 				log.Printf("%s stopping", c.GetRemoteAddr())
 			}
 
@@ -270,7 +301,7 @@ func (c *client) Handle() {
 				c.Close()
 			}
 
-			if debug {
+			if CLIENT_DEBUG {
 				log.Printf("%s breaking", c.GetRemoteAddr())
 			}
 
@@ -302,6 +333,7 @@ func newClient(conn *websocket.Conn, req *http.Request) *client {
 	c.request = req
 	c.permissions = auth.Permissions{}
 	c.connected = true
+	c.closing = false
 	c.subscriptions = []string{}
 	c.write = permissionCache{}
 	c.outgoing = make(chan []byte, OUTGOING_BUFFER)
