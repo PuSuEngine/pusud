@@ -15,6 +15,7 @@ const CLIENT_DEBUG = false
 
 // Buffer up to this many messages going out
 const OUTGOING_BUFFER = 100
+
 // Buffer up to this many messages coming in
 const INCOMING_BUFFER = 100
 
@@ -29,7 +30,7 @@ type client struct {
 	request       *http.Request
 	permissions   auth.Permissions
 	connected     bool
-	closing		  bool
+	closing       bool
 	subscriptions []string
 	write         permissionCache
 	outgoing      chan []byte
@@ -51,23 +52,33 @@ func (c *client) Close() {
 		connectedClients--
 
 		// Close the incoming channel, throw away any extra messages that might be coming our way
-		if CLIENT_DEBUG { log.Printf("Closing incoming queue for %s", c.GetRemoteAddr()) }
+		if CLIENT_DEBUG {
+			log.Printf("Closing incoming queue for %s", c.GetRemoteAddr())
+		}
 		close(c.incoming)
 
 		// Wait for the outgoing channel to empty
-		if CLIENT_DEBUG { log.Printf("Waiting for %s outgoing queue", c.GetRemoteAddr()) }
+		if CLIENT_DEBUG {
+			log.Printf("Waiting for %s outgoing queue", c.GetRemoteAddr())
+		}
 		c.outgoingWG.Wait()
 
-		if CLIENT_DEBUG { log.Printf("Closing outgoing queue for %s", c.GetRemoteAddr()) }
+		if CLIENT_DEBUG {
+			log.Printf("Closing outgoing queue for %s", c.GetRemoteAddr())
+		}
 		close(c.outgoing)
 
-		if CLIENT_DEBUG { log.Printf("Unsubscribing %s", c.GetRemoteAddr()) }
+		if CLIENT_DEBUG {
+			log.Printf("Unsubscribing %s", c.GetRemoteAddr())
+		}
 
 		for _, channel := range c.subscriptions {
 			unsubscribe(channel, c)
 		}
 
-		if CLIENT_DEBUG { log.Printf("Closing %s", c.GetRemoteAddr()) }
+		if CLIENT_DEBUG {
+			log.Printf("Closing %s", c.GetRemoteAddr())
+		}
 
 		c.connection.Close()
 	}
@@ -309,9 +320,9 @@ func (c *client) Handle() {
 		} else {
 			select {
 			case c.incoming <- message:
-			// Message was sent to incoming queue
+				// Message was sent to incoming queue
 			default:
-			// Incoming queue was full
+				// Incoming queue was full
 				log.Printf("Client from %s filled incoming message queue, disconnecting.", c.GetRemoteAddr())
 				c.Close()
 				return
